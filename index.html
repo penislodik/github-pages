@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Школьное расписание</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d0d1a, #1e1e3b);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(to right, #ff00ff, #00f0ff);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 15px #ff00ff, 0 0 15px #00f0ff;
+            animation: glowHeader 2s ease-in-out infinite alternate;
+            border-radius: 0 0 15px 15px;
+        }
+        @keyframes glowHeader {
+            from { box-shadow: 0 0 15px #ff00ff, 0 0 15px #00f0ff; }
+            to { box-shadow: 0 0 25px #ff00ff, 0 0 25px #00f0ff; }
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+        main {
+            flex: 1;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #1e1e3b;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 20px rgba(0, 240, 255, 0.5);
+            display: table;
+        }
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #333366;
+            padding: 12px;
+            text-align: center;
+            font-size: 1em;
+            opacity: 0;
+            animation: fadeInCell 0.7s ease forwards;
+            animation-delay: calc(0.1s * var(--cell-index));
+        }
+        @keyframes fadeInCell {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .schedule-table th {
+            background: linear-gradient(to bottom, #333366, #1e1e3b);
+            color: #00f0ff;
+            font-weight: 500;
+            text-shadow: 0 0 5px #00f0ff;
+            border-radius: 8px;
+        }
+        .schedule-table td {
+            background-color: #2a2a5c;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            border-radius: 8px;
+        }
+        .schedule-table td:empty {
+            background-color: #333366;
+        }
+        .schedule-table td:hover {
+            box-shadow: inset 0 0 10px rgba(255, 0, 255, 0.7);
+        }
+        .schedule-table td.updated {
+            animation: pulseUpdate 1s ease;
+        }
+        @keyframes pulseUpdate {
+            0% { box-shadow: 0 0 10px #ff00ff, 0 0 10px #00f0ff; }
+            50% { box-shadow: 0 0 20px #ff00ff, 0 0 20px #00f0ff; }
+            100% { box-shadow: 0 0 10px #ff00ff, 0 0 10px #00f0ff; }
+        }
+        .schedule-table td.fade-out {
+            animation: fadeOutCell 0.5s ease forwards;
+        }
+        @keyframes fadeOutCell {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+        /* Неоновые цвета для предметов с эмодзи */
+        .schedule-table td[data-subject="Математика"] { background-color: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+        .schedule-table td[data-subject="Русский язык"] { background-color: #00f0ff; box-shadow: 0 0 10px #00f0ff; }
+        .schedule-table td[data-subject="Литература"] { background-color: #ff0066; box-shadow: 0 0 10px #ff0066; }
+        .schedule-table td[data-subject="Физика"] { background-color: #00ff99; box-shadow: 0 0 10px #00ff99; }
+        .schedule-table td[data-subject="Химия"] { background-color: #cc00ff; box-shadow: 0 0 10px #cc00ff; }
+        .schedule-table td[data-subject="Биология"] { background-color: #00cc66; box-shadow: 0 0 10px #00cc66; }
+        .schedule-table td[data-subject="История"] { background-color: #ff6600; box-shadow: 0 0 10px #ff6600; }
+        .schedule-table td[data-subject="География"] { background-color: #0066ff; box-shadow: 0 0 10px #0066ff; }
+        .schedule-table td[data-subject="Английский язык"] { background-color: #ff00cc; box-shadow: 0 0 10px #ff00cc; }
+        .schedule-table td[data-subject="Физкультура"] { background-color: #00ff00; box-shadow: 0 0 10px #00ff00; }
+        .schedule-table td[data-subject] { color: #fff; font-weight: 500; text-shadow: 0 0 5px #ffffff; }
+        .edit-form {
+            background: #1e1e3b;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5), 0 0 15px rgba(0, 240, 255, 0.5);
+            display: grid;
+            grid-template-columns: 1fr 1fr 2fr 1fr;
+            gap: 15px;
+            align-items: center;
+        }
+        .edit-form label {
+            font-size: 1.1em;
+            color: #00f0ff;
+            font-weight: 500;
+            text-shadow: 0 0 5px #00f0ff;
+        }
+        .edit-form select, .edit-form input {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #333366;
+            color: #fff;
+            font-size: 1em;
+            transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+        }
+        .edit-form select:focus, .edit-form input:focus {
+            background-color: #444488;
+            box-shadow: 0 0 10px #ff00ff;
+            transform: scale(1.02);
+            outline: none;
+        }
+        .edit-form button {
+            background: linear-gradient(to right, #ff00ff, #00f0ff);
+            color: #ffffff;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        .edit-form button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00f0ff, 0 0 15px #ff00ff;
+        }
+        .edit-form button:active {
+            animation: buttonFlash 0.3s ease;
+        }
+        @keyframes buttonFlash {
+            0% { box-shadow: 0 0 10px #ff00ff, 0 0 10px #00f0ff; }
+            50% { box-shadow: 0 0 20px #ffffff, 0 0 20px #ffffff; }
+            100% { box-shadow: 0 0 10px #ff00ff, 0 0 10px #00f0ff; }
+        }
+        .clear-button {
+            background: linear-gradient(to right, #ff0066, #ff3300);
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 10px #ff0066;
+        }
+        .clear-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #ff3300, 0 0 15px #ff0066;
+        }
+        .clear-button:active {
+            animation: buttonFlash 0.3s ease;
+        }
+        #custom-subject {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 8px;
+        }
+        #custom-subject.visible {
+            display: block;
+            opacity: 1;
+        }
+        footer {
+            background: linear-gradient(to right, #333366, #1e1e3b);
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #ccc;
+            box-shadow: 0 0 10px #ff00ff;
+            border-radius: 15px 15px 0 0;
+        }
+        @media (max-width: 800px) {
+            .edit-form {
+                grid-template-columns: 1fr;
+            }
+            .edit-form button {
+                width: 100%;
+            }
+        }
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+            .schedule-table th, .schedule-table td {
+                font-size: 0.8em;
+                padding: 8px;
+                border-radius: 6px;
+            }
+            .edit-form select, .edit-form input, .edit-form button {
+                font-size: 0.9em;
+                border-radius: 6px;
+            }
+            header, .edit-form, .schedule-table, footer {
+                border-radius: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Школьное расписание</h1>
+    </header>
+    <main>
+        <section class="edit-form">
+            <div>
+                <label for="day">День недели:</label>
+                <select id="day">
+                    <option value="0">Понедельник</option>
+                    <option value="1">Вторник</option>
+                    <option value="2">Среда</option>
+                    <option value="3">Четверг</option>
+                    <option value="4">Пятница</option>
+                </select>
+            </div>
+            <div>
+                <label for="lesson">Урок:</label>
+                <select id="lesson">
+                    <option value="0">1-й урок</option>
+                    <option value="1">2-й урок</option>
+                    <option value="2">3-й урок</option>
+                    <option value="3">4-й урок</option>
+                    <option value="4">5-й урок</option>
+                    <option value="5">6-й урок</option>
+                </select>
+            </div>
+            <div>
+                <label for="subject">Предмет:</label>
+                <select id="subject" onchange="toggleCustomSubject()">
+                    <option value="Математика">📏 Математика</option>
+                    <option value="Русский язык">📖 Русский язык</option>
+                    <option value="Литература">📚 Литература</option>
+                    <option value="Физика">⚡ Физика</option>
+                    <option value="Химия">🧪 Химия</option>
+                    <option value="Биология">🌱 Биология</option>
+                    <option value="История">🏛️ История</option>
+                    <option value="География">🌍 География</option>
+                    <option value="Английский язык">🇬🇧 Английский язык</option>
+                    <option value="Физкультура">⚽ Физкультура</option>
+                    <option value="Другое">❓ Другое</option>
+                </select>
+                <input type="text" id="custom-subject" placeholder="Введите свой предмет">
+            </div>
+            <button onclick="updateSchedule()">Обновить</button>
+        </section>
+        <button class="clear-button" onclick="clearSchedule()">Очистить расписание</button>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Урок</th>
+                    <th>Понедельник</th>
+                    <th>Вторник</th>
+                    <th>Среда</th>
+                    <th>Четверг</th>
+                    <th>Пятница</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body">
+                <tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>3</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>4</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>5</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>6</td><td></td><td></td><td></td><td></td><td></td></tr>
+            </tbody>
+        </table>
+    </main>
+    <footer>
+        <p>© 2025 Школьное расписание</p>
+    </footer>
+    <script>
+        // Эмодзи для предметов
+        const subjectEmojis = {
+            'Математика': '📏',
+            'Русский язык': '📖',
+            'Литература': '📚',
+            'Физика': '⚡',
+            'Химия': '🧪',
+            'Биология': '🌱',
+            'История': '🏛️',
+            'География': '🌍',
+            'Английский язык': '🇬🇧',
+            'Физкультура': '⚽'
+        };
+
+        // Инициализация расписания из localStorage или пустого массива
+        let schedule = JSON.parse(localStorage.getItem('schedule')) || Array(5).fill().map(() => Array(6).fill(''));
+
+        // Загрузка расписания при старте
+        window.onload = () => {
+            console.log('Page loaded, initializing schedule');
+            loadSchedule();
+        };
+
+        function loadSchedule() {
+            console.log('Loading schedule:', schedule);
+            try {
+                const tbody = document.getElementById('schedule-body');
+                if (!tbody) {
+                    throw new Error('Schedule body element not found');
+                }
+                tbody.innerHTML = '';
+                let cellIndex = 0;
+                for (let lesson = 0; lesson < 6; lesson++) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td style="--cell-index: ${cellIndex++}">${lesson + 1}</td>`;
+                    for (let day = 0; day < 5; day++) {
+                        const subject = schedule[day][lesson] || '';
+                        const emoji = subjectEmojis[subject] || '';
+                        const displayText = subject ? `${emoji} ${subject}` : '';
+                        row.innerHTML += `<td style="--cell-index: ${cellIndex++}" data-subject="${subject}">${displayText}</td>`;
+                    }
+                    tbody.appendChild(row);
+                }
+                console.log('Schedule loaded successfully');
+            } catch (error) {
+                console.error('Error loading schedule:', error);
+                alert('Произошла ошибка при загрузке расписания. Проверьте консоль для деталей.');
+            }
+        }
+
+        function toggleCustomSubject() {
+            const subjectSelect = document.getElementById('subject');
+            const customSubject = document.getElementById('custom-subject');
+            if (subjectSelect.value === 'Другое') {
+                customSubject.classList.add('visible');
+            } else {
+                customSubject.classList.remove('visible');
+                customSubject.value = '';
+            }
+        }
+
+        function updateSchedule() {
+            try {
+                const day = parseInt(document.getElementById('day').value);
+                const lesson = parseInt(document.getElementById('lesson').value);
+                const subjectSelect = document.getElementById('subject');
+                let subject = subjectSelect.value;
+                if (subject === 'Другое') {
+                    subject = document.getElementById('custom-subject').value.trim();
+                }
+                if (subject) {
+                    schedule[day][lesson] = subject;
+                    localStorage.setItem('schedule', JSON.stringify(schedule));
+                    console.log('Updated schedule:', schedule);
+                    loadSchedule();
+                    // Подсветка обновленной ячейки
+                    setTimeout(() => {
+                        const cell = document.querySelector(`#schedule-body tr:nth-child(${lesson + 1}) td:nth-child(${day + 2})`);
+                        if (cell) cell.classList.add('updated');
+                        setTimeout(() => cell.classList.remove('updated'), 1000);
+                    }, 100);
+                    subjectSelect.value = 'Математика'; // Сброс на первый предмет
+                    toggleCustomSubject(); // Скрыть поле, если было видно
+                } else {
+                    alert('Выберите предмет или введите свой!');
+                }
+            } catch (error) {
+                console.error('Error updating schedule:', error);
+                alert('Произошла ошибка при обновлении расписания. Проверьте консоль для деталей.');
+            }
+        }
+
+        function clearSchedule() {
+            console.log('Initiating clear schedule');
+            try {
+                if (confirm('Вы уверены, что хотите очистить расписание?')) {
+                    console.log('User confirmed clear');
+                    // Анимация затухания ячеек
+                    const cells = document.querySelectorAll('.schedule-table td');
+                    cells.forEach(cell => cell.classList.add('fade-out'));
+                    setTimeout(() => {
+                        schedule = Array(5).fill().map(() => Array(6).fill(''));
+                        localStorage.setItem('schedule', JSON.stringify(schedule));
+                        console.log('Schedule cleared:', schedule);
+                        loadSchedule();
+                        console.log('Clear completed');
+                    }, 500); // Задержка для анимации
+                } else {
+                    console.log('Clear cancelled by user');
+                }
+            } catch (error) {
+                console.error('Error clearing schedule:', error);
+                alert('Произошла ошибка при очистке расписания. Проверьте консоль для деталей.');
+            }
+        }
+    </script>
+</body>
+</html>
